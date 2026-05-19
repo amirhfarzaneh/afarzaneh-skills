@@ -1,28 +1,25 @@
-import { readFileSync, writeFileSync, mkdirSync, existsSync } from "fs";
-import { join, resolve, dirname } from "path";
+import { cpSync, readdirSync, existsSync } from "fs";
+import { join, resolve } from "path";
 import { AGENTS } from "./agents.js";
 
 const SKILLS_DIR = join(new URL(".", import.meta.url).pathname, "..", "skills");
-
-function readLocalSkill(skillName) {
-  const p = join(SKILLS_DIR, skillName, "SKILL.md");
-  if (existsSync(p)) return readFileSync(p, "utf8");
-  return null;
-}
 
 export async function installSkill(skillName, agentKey, { cwd } = {}) {
   const agent = AGENTS[agentKey];
   if (!agent) throw new Error(`Unknown agent "${agentKey}". Valid: ${Object.keys(AGENTS).join(", ")}`);
 
-  const content = readLocalSkill(skillName);
-  if (!content) return { status: "missing" };
+  const srcDir = join(SKILLS_DIR, skillName);
+  if (!existsSync(srcDir)) return { status: "missing" };
+
+  const files = readdirSync(srcDir, { recursive: true }).filter(
+    (f) => !f.startsWith(".")
+  );
+  if (!files.length) return { status: "missing" };
 
   const targetDir = resolve(cwd || process.cwd());
-  const destRel = agent.dest(skillName);
-  const destAbs = resolve(targetDir, destRel);
+  const destAbs = resolve(targetDir, agent.dest(skillName));
 
-  mkdirSync(dirname(destAbs), { recursive: true });
-  writeFileSync(destAbs, content);
+  cpSync(srcDir, destAbs, { recursive: true });
 
-  return { status: "installed", path: destAbs, label: agent.label };
+  return { status: "installed", path: destAbs, label: agent.label, files };
 }

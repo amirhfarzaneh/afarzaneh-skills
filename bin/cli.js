@@ -50,7 +50,10 @@ async function cmdAdd([skillName, agentKey]) {
     process.exit(1);
   }
 
-  console.log(`  [ok]  ${result.label}: ${result.path}\n`);
+  for (const f of result.files) {
+    console.log(`  [ok]  ${result.path}/${f}`);
+  }
+  console.log();
 }
 
 function cmdList() {
