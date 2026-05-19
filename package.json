@@ -1,6 +1,6 @@
 {
   "name": "afarzanehskills",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Add AI agent skills for Claude, Copilot, and Codex to your project",
   "type": "module",
   "bin": {
@@ -14,7 +14,14 @@
   "scripts": {
     "test": "node bin/cli.js list"
   },
-  "keywords": ["claude", "copilot", "codex", "ai", "skills", "agent"],
+  "keywords": [
+    "claude",
+    "copilot",
+    "codex",
+    "ai",
+    "skills",
+    "agent"
+  ],
   "author": "afarzaneh",
   "license": "MIT",
   "dependencies": {}
