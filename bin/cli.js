@@ -5,73 +5,52 @@ import { AGENTS } from "../src/agents.js";
 
 const [, , command, ...args] = process.argv;
 
+const validAgents = Object.keys(AGENTS).join(", ");
+
 function usage() {
   console.log(`
-  afarzanehskills <command> [options]
+  afarzanehskills <command>
 
   Commands:
-    add <skill>           Install a skill for all agents
-    add <skill> --only claude,copilot
-                          Install for specific agents only
+    add <skill> <agent>   Install a skill for a specific agent
     list                  List available skills
 
+  Agents: ${validAgents}
+
   Examples:
-    npx afarzanehskills@latest add amirethyst
-    npx afarzanehskills@latest add amirethyst --only claude
+    npx afarzanehskills@latest add amirethyst claude
+    npx afarzanehskills@latest add amirethyst copilot
     npx afarzanehskills@latest list
   `);
 }
 
-async function cmdAdd(args) {
-  const skillName = args[0];
-  if (!skillName) {
-    console.error("Error: skill name required.\n  afarzanehskills add <skill>");
+async function cmdAdd([skillName, agentKey]) {
+  if (!skillName || !agentKey) {
+    console.error(`Usage: afarzanehskills add <skill> <agent>\nAgents: ${validAgents}`);
     process.exit(1);
   }
 
-  const onlyIdx = args.indexOf("--only");
-  let agents = null;
-  if (onlyIdx !== -1) {
-    agents = args[onlyIdx + 1]?.split(",").map((s) => s.trim());
-    const valid = Object.keys(AGENTS);
-    const bad = agents?.filter((a) => !valid.includes(a));
-    if (bad?.length) {
-      console.error(`Unknown agent(s): ${bad.join(", ")}. Valid: ${valid.join(", ")}`);
-      process.exit(1);
-    }
+  if (!AGENTS[agentKey]) {
+    console.error(`Unknown agent "${agentKey}". Valid: ${validAgents}`);
+    process.exit(1);
   }
 
-  console.log(`\nInstalling skill "${skillName}"...\n`);
+  console.log(`\nInstalling "${skillName}" for ${AGENTS[agentKey].label}...\n`);
 
-  const remote = args.includes("--remote");
-
-  let results;
+  let result;
   try {
-    results = await installSkill(skillName, { agents, remote });
+    result = await installSkill(skillName, agentKey);
   } catch (err) {
     console.error(`Error: ${err.message}`);
     process.exit(1);
   }
 
-  let anyFailed = false;
-  for (const r of results) {
-    if (r.status === "installed") {
-      console.log(`  [ok]      ${r.label}: ${r.path}`);
-    } else if (r.status === "already-installed") {
-      console.log(`  [skip]    ${r.label}: already installed`);
-    } else if (r.status === "missing") {
-      console.log(`  [none]    ${r.label}: no skill file found`);
-      anyFailed = true;
-    }
-  }
-
-  const installed = results.filter((r) => r.status === "installed").length;
-  if (installed === 0 && anyFailed) {
-    console.error(`\nSkill "${skillName}" not found. Run "list" to see available skills.`);
+  if (result.status === "missing") {
+    console.error(`Skill "${skillName}" not found. Run "list" to see available skills.`);
     process.exit(1);
   }
 
-  console.log(`\nDone. ${installed} file(s) written.\n`);
+  console.log(`  [ok]  ${result.label}: ${result.path}\n`);
 }
 
 function cmdList() {
@@ -80,9 +59,9 @@ function cmdList() {
     console.log("No skills found.");
     return;
   }
-  console.log("\nAvailable skills:\n");
-  for (const s of skills) {
-    console.log(`  ${s.name.padEnd(20)} [${s.agents.join(", ")}]`);
+  console.log(`\nAvailable skills:\n`);
+  for (const name of skills) {
+    console.log(`  ${name}`);
   }
   console.log();
 }
