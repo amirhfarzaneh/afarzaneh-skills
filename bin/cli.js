@@ -1,37 +1,55 @@
 #!/usr/bin/env node
+import select from "@inquirer/select";
+import { AGENTS } from "../src/agents.js";
 import { installSkill } from "../src/install.js";
 import { listSkills } from "../src/list.js";
-import { AGENTS } from "../src/agents.js";
 
 const [, , command, ...args] = process.argv;
 
-const validAgents = Object.keys(AGENTS).join(", ");
+const validAgents = Object.keys(AGENTS);
 
 function usage() {
   console.log(`
   afarzanehskills <command>
 
   Commands:
-    add <skill> <agent>   Install a skill for a specific agent
+    add [skill] [agent]   Install a skill (interactive if args are omitted)
     list                  List available skills
 
-  Agents: ${validAgents}
+  Agents: ${validAgents.join(", ")}
 
   Examples:
+    npx afarzanehskills@latest add
     npx afarzanehskills@latest add amirethyst claude
-    npx afarzanehskills@latest add amirethyst copilot
     npx afarzanehskills@latest list
   `);
 }
 
-async function cmdAdd([skillName, agentKey]) {
-  if (!skillName || !agentKey) {
-    console.error(`Usage: afarzanehskills add <skill> <agent>\nAgents: ${validAgents}`);
+async function promptSkill() {
+  const skills = listSkills();
+  if (!skills.length) {
+    console.error("No skills available.");
     process.exit(1);
   }
+  return select({
+    message: "Select a skill",
+    choices: skills.map((s) => ({ value: s, name: s })),
+  });
+}
+
+async function promptAgent() {
+  return select({
+    message: "Select an agent",
+    choices: validAgents.map((k) => ({ value: k, name: AGENTS[k].label })),
+  });
+}
+
+async function cmdAdd([skillArg, agentArg]) {
+  const skillName = skillArg || await promptSkill();
+  const agentKey = agentArg || await promptAgent();
 
   if (!AGENTS[agentKey]) {
-    console.error(`Unknown agent "${agentKey}". Valid: ${validAgents}`);
+    console.error(`Unknown agent "${agentKey}". Valid: ${validAgents.join(", ")}`);
     process.exit(1);
   }
 

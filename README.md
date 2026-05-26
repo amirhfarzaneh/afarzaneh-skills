@@ -15,11 +15,13 @@ npx afarzanehskills@latest add <skill> <agent>
 ### Examples
 
 ```bash
-# Add a skill for Claude Code
+# Interactive — prompts you to pick a skill then an agent
+npx afarzanehskills@latest add
+
+# Non-interactive — pass both arguments directly
 npx afarzanehskills@latest add amirethyst claude
 # → writes to .claude/skills/amirethyst/SKILL.md
 
-# Add a skill for GitHub Copilot
 npx afarzanehskills@latest add amirethyst copilot
 # → writes to .github/skills/amirethyst/SKILL.md
 
