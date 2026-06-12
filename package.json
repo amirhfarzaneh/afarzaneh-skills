@@ -1,6 +1,6 @@
 {
   "name": "afarzanehskills",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "Add AI agent skills for Claude, Copilot, and Codex to your project",
   "type": "module",
   "bin": {
